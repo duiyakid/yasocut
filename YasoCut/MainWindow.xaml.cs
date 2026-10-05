@@ -464,6 +464,21 @@ namespace YasoCut
             }
         }
 
+        private void CheckBoxFullScreen_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!_inited)
+            {
+                return;
+            }
+
+            using (Microsoft.Win32.RegistryKey soft = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE", true))
+            {
+                Microsoft.Win32.RegistryKey yasocut = soft.OpenSubKey("YasoCut", true) ?? soft.CreateSubKey("YasoCut", true);
+                yasocut.SetValue("ForceFullScreen", CheckBoxFullScreen.IsChecked.Value ? 1 : 0, Microsoft.Win32.RegistryValueKind.DWord);
+                yasocut.Dispose();
+            }
+        }
+
         private void CheckNotExitMenuItem_Click(object sender, EventArgs e)
         {
             _notExit = _checkNotExitMenuItem.Checked;
@@ -639,7 +654,11 @@ namespace YasoCut
                         }
                     }
                 }
-                if (!isFullScreen)
+                if (CheckBoxFullScreen.IsChecked == true)
+                {
+                    bounds = System.Windows.Forms.SystemInformation.VirtualScreen;
+                }
+                else if (!isFullScreen)
                 {
                     //if (workAreaAndTitle)
                     //{
@@ -820,7 +839,11 @@ namespace YasoCut
                         }
                     }
                 }
-                if (!isFullScreen)
+                if (CheckBoxFullScreen.IsChecked == true)
+                {
+                    bounds = System.Windows.Forms.SystemInformation.VirtualScreen;
+                }
+                else if (!isFullScreen)
                 {
                     //if (workAreaAndTitle)
                     //{
@@ -1050,7 +1073,11 @@ namespace YasoCut
                 {
                     NativeMethods.SetWindowDisplayAffinity(handle, 0);
                 }
-                if (winStyle != 2 && winStyle != 3)
+                if (CheckBoxFullScreen.IsChecked == true)
+                {
+                    bounds = System.Windows.Forms.SystemInformation.VirtualScreen;
+                }
+                else if (winStyle != 2 && winStyle != 3)
                 {
                     if (_checkRemoveAeroMenuItem.Checked &&
                         NativeMethods.DwmGetWindowAttribute(handle, DWMWA_NCRENDERING_ENABLED, ref ncrp, 4) == 0 &&
@@ -1279,6 +1306,13 @@ namespace YasoCut
                     yasocut.SetValue("Path", path, RegistryValueKind.String);
                 }
                 TextboxPath.Text = path;
+
+                if (!(yasocut.GetValue("ForceFullScreen") is int forceFullScreen))
+                {
+                    forceFullScreen = 0;
+                    yasocut.SetValue("ForceFullScreen", forceFullScreen, RegistryValueKind.DWord);
+                }
+                CheckBoxFullScreen.IsChecked = forceFullScreen != 0;
 
                 if (!(yasocut.GetValue("Prefix") is string prefix))
                 {
